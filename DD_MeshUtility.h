@@ -38,6 +38,14 @@ struct dd_vec4
 		data[3] = other.data[3];
 	}
 
+	dd_vec4 operator-(const dd_vec4 other) const
+	{
+		return dd_vec4(data[0] - other.data[0],
+					   data[1] - other.data[1],
+					   data[2] - other.data[2],
+					   data[3] - other.data[3]);
+	}
+
 	T& x() { return data[0]; }
 	T const& x() const { return data[0]; }
 	T& y() { return data[1]; }

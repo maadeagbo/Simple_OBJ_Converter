@@ -11,6 +11,7 @@ namespace
 {
 	std::vector<vec3_f>		vert;
 	std::vector<vec3_f>		norm;
+	std::vector<vec3_f>		tang;
 	std::vector<vec3_f>		uv;
 	std::vector<Vertex>		vertices;
 	std::vector<unsigned>	indices;
@@ -81,7 +82,6 @@ ObjImportStatus DD_ObjConverter::importOBJ(const char* filename)
 		out.x() = std::strtoul(str, &nxt, 10); nxt++;
 		out.y() = std::strtoul(nxt, &nxt, 10); nxt++;
 		out.z() = std::strtoul(nxt, nullptr, 10);
-		printf("%u %u %u ", out.x(), out.y(), out.z());
 
 		return out;
 	};
@@ -115,6 +115,39 @@ ObjImportStatus DD_ObjConverter::importOBJ(const char* filename)
 		}
 	};
 
+	/// \brief Lambda to calculate tangent space for face 
+	auto getTanSpaceVector = [&](const vec3_u idxs)
+	{
+		vec3_f out;
+		float factor = 0.f;
+
+		// get uv and position info
+		vec3_f vert_1 = vert[idxs.x()];
+		vec3_f vert_2 = vert[idxs.y()];
+		vec3_f vert_3 = vert[idxs.z()];
+		vec3_f uv_1 = uv[idxs.x()];
+		vec3_f uv_2 = uv[idxs.y()];
+		vec3_f uv_3 = uv[idxs.z()];
+
+		// get edge and uv (direction) info
+		vec3_f edge_1 = vert_2 - vert_1;
+		vec3_f edge_2 = vert_3 - vert_1;
+		vec3_f del_uv1 = uv_2 - uv_1;
+		vec3_f del_uv2 = uv_3 - uv_1;
+
+		// calculate the inverse of the UV matrix and multiply by edge 1 & 2
+		factor = 1.f / (del_uv1.x() * del_uv2.y() - del_uv2.x() * del_uv1.y());
+		out.x() = factor * (del_uv2.y() * edge_1.x() - del_uv1.y() * edge_2.x());
+		out.y() = factor * (del_uv2.y() * edge_1.y() - del_uv1.y() * edge_2.y());
+		out.z() = factor * (del_uv2.y() * edge_1.z() - del_uv1.y() * edge_2.z());
+		// normalize
+		float mag = std::sqrt(out.x() * out.x() + out.y() * out.y() + out.z() * 
+							  out.z());
+		out = vec3_f( out.x()/mag, out.y()/mag, out.z()/mag );
+		printf("tan -> %.3f %.3f %.3f\n", out.x(), out.y(), out.z());
+		return out;
+	};
+
 	// get file contents
 	std::ifstream file(filename);
 	if (file.good()) {
@@ -143,21 +176,33 @@ ObjImportStatus DD_ObjConverter::importOBJ(const char* filename)
 				char* str = line;
 				skipPastDelim(str); // skip identifier
 				const unsigned start_idx = indices.size();
+				vec3_u idxs;
 				unsigned count = 0;
 				while(*str) {		// null terminate evaluates to false
 					if (count < 3) {
 						indices.push_back(getVertex(str));
+						// calc tangent on third vertex
+						if (count == 2) {
+							idxs.x() = indices[start_idx];
+							idxs.y() = indices[start_idx + 1];
+							idxs.z() = indices[start_idx + 2];
+							getTanSpaceVector(idxs);
+						}
 					}
 					else {
+						idxs.x() = indices[start_idx];
+						idxs.y() = indices[start_idx + (count - 1)];
+						idxs.z() = indices[start_idx + count];
 						// triengle fan
-						indices.push_back(indices[start_idx]);
-						indices.push_back(indices[start_idx + (count - 1)]);
+						indices.push_back(idxs.x());
+						indices.push_back(idxs.y());
 						indices.push_back(getVertex(str));
+						// calc tangent after every face
+						getTanSpaceVector(idxs);
 					}
 					count += 1;
-					printf("\t");
 				}
-				printf("\t\n");
+				printf("\n");
 			}
 		}
 		return ObjImportStatus::GOOD;
