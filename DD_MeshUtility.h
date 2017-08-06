@@ -56,8 +56,50 @@ struct dd_vec4
 	T const& w() const { return data[3]; }
 };
 
-struct vec3_f : public dd_vec4<float> {};
-struct vec3_u : public dd_vec4<unsigned> {};
+struct vec3_f : public dd_vec4<float>
+{
+	vec3_f(float x = 0, float y = 0, float z = 0, float w = 0) : 
+		dd_vec4(x, y, z, w)
+	{}
+
+	vec3_f(float bin[3])
+	{
+		data[0] = bin[0];
+		data[1] = bin[1];
+		data[2] = bin[2];
+		data[3] = 0.f;
+	}
+
+	vec3_f operator-(const vec3_f other) const
+	{
+		return vec3_f(data[0] - other.data[0],
+					   data[1] - other.data[1],
+					   data[2] - other.data[2],
+					   data[3] - other.data[3]);
+	}
+};
+struct vec3_u : public dd_vec4<unsigned>
+{
+	vec3_u(unsigned x = 0, unsigned y = 0, unsigned z = 0, unsigned w = 0) : 
+		dd_vec4(x, y, z, w)
+	{}
+
+	vec3_u(unsigned bin[3])
+	{
+		data[0] = bin[0];
+		data[1] = bin[1];
+		data[2] = bin[2];
+		data[3] = 0.f;
+	}
+
+	vec3_u operator-(const vec3_u other) const
+	{
+		return vec3_u(data[0] - other.data[0],
+					   data[1] - other.data[1],
+					   data[2] - other.data[2],
+					   data[3] - other.data[3]);
+	}
+};
 
 struct Vertex
 {

@@ -18,5 +18,6 @@ enum ObjImportStatus
 struct DD_ObjConverter
 {
 	ObjImportStatus importOBJ(const char* filename);
+	void exportMesh();
 	void printStats();
 };

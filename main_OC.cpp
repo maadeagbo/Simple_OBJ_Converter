@@ -12,6 +12,7 @@ int main(int argc, char const *argv[])
 		DD_ObjConverter converter;
 		converter.importOBJ(argv[1]);
 		converter.printStats();
+		converter.exportMesh();
 	}
 	
 	return 0;
