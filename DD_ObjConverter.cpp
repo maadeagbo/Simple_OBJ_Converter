@@ -289,7 +289,7 @@ void DD_ObjConverter::exportMesh()
 	outfile << "<buffer>\n";
 	snprintf(lineBuff, sizeof(lineBuff), "v %lu", vertices.size());
 	outfile << lineBuff << "\n";
-	snprintf(lineBuff, sizeof(lineBuff), "e %lu", mesh_offset.size());
+	snprintf(lineBuff, sizeof(lineBuff), "e %lu", mesh_offset.size() - 1);
 	outfile << lineBuff << "\n";
 	snprintf(lineBuff, sizeof(lineBuff), "m 1");
 	outfile << lineBuff << "\n";
@@ -340,7 +340,7 @@ void DD_ObjConverter::exportMesh()
 	for (size_t i = 0; i < mesh_offset.size() - 1; i++) {
 		outfile << "<ebo>\n";
 		unsigned e_size = mesh_offset[i + 1] - mesh_offset[i];
-		snprintf(lineBuff, sizeof(lineBuff), "s %u", e_size);
+		snprintf(lineBuff, sizeof(lineBuff), "s %u", e_size * 3);
 		outfile << lineBuff << "\n";
 		outfile << "m " << 0 << "\n"; // material index
 
