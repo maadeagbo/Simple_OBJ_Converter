@@ -7,7 +7,7 @@
 #include <vector>
 #include <map>
 
-namespace 
+namespace
 {
 	std::vector<vec3_f>		vert;
 	std::vector<vec3_f>		norm;
@@ -41,11 +41,11 @@ ObjImportStatus DD_ObjConverter::importOBJ(const char* filename)
 	obj_id.set("static_mesh");
 
 	/// \brief Lambda to move c string past next space
-	auto skipPastDelim = [&](char *&str, const char delim = ' ') 
+	auto skipPastDelim = [&](char *&str, const char delim = ' ')
 	{
 		while (*str != delim && *str) { str++; } str++;
 	};
-	
+
 	/// \brief Lambda to get line id from obj file
 	auto getLineId = [&](char *str, char *buff, const unsigned count)
 	{
@@ -54,7 +54,7 @@ ObjImportStatus DD_ObjConverter::importOBJ(const char* filename)
 		}
 		buff[count] = '\0';
 	};
-	
+
 	/// \brief Lambda to get vec3_f from c string
 	auto getVec3 = [&](char *str, const unsigned count)
 	{
@@ -67,7 +67,7 @@ ObjImportStatus DD_ObjConverter::importOBJ(const char* filename)
 			idx = 0;
 		    while (*str != ' ' && *str) {
 				buff[idx] = *str;
-				idx++; str++; 
+				idx++; str++;
 			}
 			buff[idx] = '\0';
 			skipPastDelim(str);
@@ -102,7 +102,7 @@ ObjImportStatus DD_ObjConverter::importOBJ(const char* filename)
 
 		while (*str != ' ' && *str) {
 			buff[idx] = *str;
-			idx++; str++; 
+			idx++; str++;
 		}
 		buff[idx] = '\0';
 		vec3_u info_idx = faceToVec3(buff);
@@ -130,11 +130,11 @@ ObjImportStatus DD_ObjConverter::importOBJ(const char* filename)
 			output.normal[1] = norm[info_idx.z()].y();
 			output.normal[2] = norm[info_idx.z()].z();
 
-			// printf("v->\t %.3f %.3f %.3f\n", 
+			// printf("v->\t %.3f %.3f %.3f\n",
 			// 		output.position[0], output.position[1], output.position[2]);
-			// printf("n->\t %.3f %.3f %.3f\n", 
+			// printf("n->\t %.3f %.3f %.3f\n",
 			// 		output.normal[0], output.normal[1], output.normal[2]);
-			// printf("uv->\t %.3f %.3f", 
+			// printf("uv->\t %.3f %.3f",
 			// 		output.texCoords[0], output.texCoords[1]);
 
 			vertices.push_back(output);
@@ -143,7 +143,7 @@ ObjImportStatus DD_ObjConverter::importOBJ(const char* filename)
 		}
 	};
 
-	/// \brief Lambda to calculate tangent space for face 
+	/// \brief Lambda to calculate tangent space for face
 	auto getTanSpaceVector = [&](const vec3_u idxs)
 	{
 		vec3_f out;
@@ -172,7 +172,7 @@ ObjImportStatus DD_ObjConverter::importOBJ(const char* filename)
 		out.y() = factor * (del_uv2.y() * edge_1.y() - del_uv1.y() * edge_2.y());
 		out.z() = factor * (del_uv2.y() * edge_1.z() - del_uv1.y() * edge_2.z());
 		// normalize
-		float mag = std::sqrt(out.x() * out.x() + out.y() * out.y() + out.z() * 
+		float mag = std::sqrt(out.x() * out.x() + out.y() * out.y() + out.z() *
 							  out.z());
 		out = vec3_f( out.x()/mag, out.y()/mag, out.z()/mag );
 		// printf("tan -> %.3f %.3f %.3f\n", out.x(), out.y(), out.z());
@@ -198,7 +198,7 @@ ObjImportStatus DD_ObjConverter::importOBJ(const char* filename)
 			}
 			if(strcmp(lineId, "vn") == 0) {
 				if (!v_vt_vn[2]) { v_vt_vn[2] = true; }
-				norm.push_back(getVec3(line, 3));	
+				norm.push_back(getVec3(line, 3));
 			}
 			if(strcmp(lineId, "vt") == 0) {
 				if (!v_vt_vn[1]) { v_vt_vn[1] = true; }
@@ -208,7 +208,7 @@ ObjImportStatus DD_ObjConverter::importOBJ(const char* filename)
 				mesh_offset.push_back(indices.size());
 			}
 			if(strcmp(lineId, "f ") == 0) {
-				if (!v_vt_vn[0] || !v_vt_vn[1] || !v_vt_vn[2]) { 
+				if (!v_vt_vn[0] || !v_vt_vn[1] || !v_vt_vn[2]) {
 					return ObjImportStatus::V_VT_VN_MISSING;
 				}
 
@@ -337,6 +337,7 @@ void DD_ObjConverter::exportMesh()
 	outfile << "</vertex>\n";
 
 	// ebo data
+	unsigned idx_offset = 0;
 	for (size_t i = 0; i < mesh_offset.size() - 1; i++) {
 		outfile << "<ebo>\n";
 		unsigned e_size = mesh_offset[i + 1] - mesh_offset[i];
@@ -344,16 +345,19 @@ void DD_ObjConverter::exportMesh()
 		outfile << lineBuff << "\n";
 		outfile << "m " << 0 << "\n"; // material index
 
-		// printf("\nStart idx:\t%u\nEnd idx:\t%u\nSize:\t\t%u\n", 
-		// 	   mesh_offset[i],
-		// 	   mesh_offset[i] + e_size,
-		// 	   e_size);
+		printf("\nStart idx:\t%u\nEnd idx:\t%u\nSize:\t\t%u\n",
+			   mesh_offset[i],
+			   mesh_offset[i + 1],
+			   e_size * 3);
 		for (size_t j = 0; j < e_size; j++) {
 			snprintf(lineBuff, sizeof(lineBuff), "- %u %u %u",
-					 indices[j].data[0], indices[j].data[1], indices[j].data[2]);
+					 indices[j + idx_offset].data[0],
+					 indices[j + idx_offset].data[1],
+					 indices[j + idx_offset].data[2]);
 			outfile << lineBuff << "\n";
 		}
 		outfile << "</ebo>\n";
+		idx_offset += e_size;
 	}
 
 	outfile.close();
