@@ -274,7 +274,7 @@ void DD_ObjConverter::exportMesh()
 	char lineBuff[256];
 	snprintf(lineBuff, sizeof(lineBuff), "%s.ddm", obj_id._str());
 	std::fstream outfile;
-	outfile.open(lineBuff, std::ofstream::out);
+	outfile.open(lineBuff, std::ios::out);
 
 	// check file is open
 	if (outfile.bad()) {
